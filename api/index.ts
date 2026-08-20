@@ -42,7 +42,9 @@ app.get("/business", async function (req: any, res: any) {
      * 공공데이터 인증키는 코드나 요청 주소에 직접 넣지 않고
      * Vercel 환경변수에서 가져옵니다.
      */
-    const serviceKey = process.env.PUBLIC_DATA_SERVICE_KEY;
+    const serviceKey = decodeURIComponent(
+  process.env.PUBLIC_DATA_SERVICE_KEY || ""
+);
 
     if (!serviceKey) {
       return res.status(500).json({
