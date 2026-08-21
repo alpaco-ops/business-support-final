@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 연간 교육 지원금 예상 한도 조회</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+    
+    .container { width: 100%; max-width: 520px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05); padding: 32px 24px; border: 1px solid var(--border); }
+    
+    .header { text-align: center; margin-bottom: 28px; }
+    .header h1 { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    .header p { font-size: 14px; color: var(--text-muted); line-height: 1.5; }
+
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .input-wrapper { display: flex; gap: 8px; }
+    
+    input[type="text"] {
+      flex: 1; padding: 14px 16px; font-size: 16px; border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--primary); }
+    
+    .btn-submit {
+      width: 100%; padding: 16px; background-color: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-submit:hover { background-color: var(--primary-hover); }
+
+    /* 로딩 애니메이션 */
+    .loading-box { display: none; text-align: center; padding: 30px 0; }
+    .spinner { width: 36px; height: 36px; border: 4px solid var(--border); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* 오류 안내 */
+    .error-box { display: none; margin-top: 20px; padding: 16px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; color: #b91c1c; font-size: 13px; line-height: 1.5; text-align: center; }
+
+    /* 결과 화면 */
+    .result-box { display: none; margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border); animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .company-title { font-size: 15px; font-weight: 600; text-align: center; margin-bottom: 16px; color: var(--text); }
+    
+    /* 4분할 기업 정보 그리드 */
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+    .info-card { background: #f1f5f9; border-radius: 8px; padding: 12px 14px; text-align: left; border: 1px solid #e2e8f0; }
+    .info-card .info-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; display: block; }
+    .info-card .info-val { font-size: 13px; font-weight: 700; color: var(--text); word-break: keep-all; }
+    
+    /* 우선지원대상 뱃지 */
+    .badge { display: inline-block; background-color: #dbeafe; color: #1e40af; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px; }
+
+    /* 기업 규모 선택 */
+    .size-select-section { margin-bottom: 20px; }
+    .size-select-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    .size-select { display: flex; gap: 8px; }
+    .size-btn { flex: 1; padding: 10px 8px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); border-radius: 8px; background: #fff; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; }
+    .size-btn:hover { border-color: #93c5fd; }
+    .size-btn.selected { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+
+    /* 지원금 한도 카드 */
+    .amount-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
+    .amount-card .label { font-size: 13px; color: #1e40af; margin-bottom: 6px; font-weight: 600; }
+    .amount-card .value { font-size: 24px; font-weight: 800; color: var(--primary); }
+
+    /* 임시값(미확정 산식) 안내 */
+    .temp-value-notice { display: none; font-size: 11px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 6px; padding: 8px 10px; margin-bottom: 12px; text-align: center; line-height: 1.4; }
+
+    /* 산출 공식 아코디언 토글 영역 */
+    .formula-accordion { margin-bottom: 20px; }
+    
+    .formula-toggle-btn {
+      width: 100%; background: none; border: none; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 0; transition: color 0.2s;
+    }
+    .formula-toggle-btn:hover { color: var(--primary); }
+    .formula-toggle-btn .arrow { transition: transform 0.25s ease; display: inline-block; font-size: 10px; }
+    .formula-toggle-btn.active .arrow { transform: rotate(180deg); }
+
+    .formula-content {
+      max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.25s ease-out; opacity: 0; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); margin-top: 6px;
+    }
+    .formula-content.open { max-height: 200px; opacity: 1; padding: 12px 14px; }
+
+    .formula-detail { line-height: 1.6; font-family: monospace, sans-serif; font-size: 11px; color: #334155; }
+    .formula-note { font-size: 11px; color: #64748b; margin-top: 6px; }
+
+    .notice { font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.4; margin-bottom: 24px; }
+
+    /* CTA 영역 */
+    .cta-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 20px; }
+    .cta-box p { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 12px; line-height: 1.4; }
+    .btn-cta { width: 100%; padding: 12px; background: #0f172a; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-cta:hover { background: #334155; }
+
+    /* 법적 고지 및 개인정보처리방침 영역 추가 */
+    .legal-notice {
+      border-top: 1px solid var(--border);
+      padding-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+    .legal-notice .private-notice {
+      margin-bottom: 4px;
+      font-weight: 600;
+      color: #475569;
+    }
+    .legal-notice a {
+      color: var(--primary);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h1>2026년 예상 교육 지원금 조회</h1>
+    <p>사업자등록번호 10자리만 입력하시면<br>올해 수령 가능한 지원금 한도 범위를 확인해 드립니다.</p>
+  </div>
+
+  <div class="form-group">
+    <label for="bizNo">사업자등록번호</label>
+    <div class="input-wrapper">
+      <input type="text" id="bizNo" placeholder="예: 107-86-72100" maxlength="12" value="107-86-72100">
+    </div>
+  </div>
+  <button type="button" class="btn-submit" onclick="handleSearch()">예상 지원금 한도 조회하기</button>
+
+  <div class="loading-box" id="loadingBox">
+    <div class="spinner"></div>
+    <p style="font-size: 14px; color: var(--text-muted);">근로복지공단 고용보험 데이터를 실시간 조회 중입니다...</p>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="result-box" id="resultBox">
+    <div class="company-title" id="companyTitle">조회된 기업 정보</div>
+    
+    <div class="info-grid">
+      <div class="info-card">
+        <span class="info-label">기업 구분</span>
+        <span class="info-val" id="compType">선택 필요</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">상시 근로자 수</span>
+        <span class="info-val" id="workerCount">0명</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">사업자등록번호</span>
+        <span class="info-val" id="bizNoDisplay">-</span>
+      </div>
+      <div class="info-card">
+        <span class="info-label">설립일</span>
+        <span class="info-val" id="establishDate">-</span>
+      </div>
+      <div class="info-card" style="grid-column: span 2;">
+        <span class="info-label">주요 업종 / 직종</span>
+        <span class="info-val" id="industryType">업종 정보</span>
+      </div>
+      <div class="info-card" style="grid-column: span 2;">
+        <span class="info-label">사업장 주소</span>
+        <span class="info-val" id="addressDisplay">주소 정보</span>
+      </div>
+    </div>
+
+    <div class="size-select-section">
+      <div class="size-select-label">기업 규모를 선택해주세요</div>
+      <div class="size-select" id="sizeSelect">
+        <button type="button" class="size-btn" data-type="중소기업" onclick="selectCompanyType('중소기업')">중소기업</button>
+        <button type="button" class="size-btn" data-type="중견기업" onclick="selectCompanyType('중견기업')">중견기업</button>
+        <button type="button" class="size-btn" data-type="대기업" onclick="selectCompanyType('대기업')">대기업</button>
+      </div>
+    </div>
+
+    <div class="amount-card">
+      <div class="label">2026 연간 예상 지원금 한도액</div>
+      <div class="value" id="amountRange">기업 규모를 선택해주세요</div>
+    </div>
+
+    <div class="temp-value-notice" id="tempValueNotice">
+      ⚠️ 중견기업·대기업 산식은 아직 확정되지 않은 임시값입니다. 예상 금액이며 실제 지원 한도와 다를 수 있습니다.
+    </div>
+
+    <div class="formula-accordion">
+      <button type="button" class="formula-toggle-btn" id="toggleBtn" onclick="toggleFormula()">
+        💡 예상 한도액 산출 기준 보기 <span class="arrow" id="toggleArrow">▼</span>
+      </button>
+      
+      <div class="formula-content" id="formulaContent">
+        <div class="formula-detail" id="formulaDetail">
+          • 추정 고용보험료 계산 중...
+        </div>
+        <div class="formula-note">※ 고용안정·직업능력개발사업 보험료 납부 추정액 기준 계산식입니다.</div>
+      </div>
+    </div>
+
+    <p class="notice">
+      ※ 본 결과는 기업 규모별 평균 보수액 및 고용보험 피보험자 수 기준 추정치입니다.<br>
+      기업 실정에 따라 실제 수령 가능 금액은 차이가 발생할 수 있습니다.
+    </p>
+
+    <div class="cta-box">
+      <p>우리 회사의 지원금 한도에 딱 맞는<br>맞춤형 교육과정을 추천받아 보시겠습니까?</p>
+      <button type="button" class="btn-cta" onclick="recommendCourse()">우리 회사 맞춤 교육과정 추천받기</button>
+    </div>
+
+    <!-- 법적 고지 및 개인정보처리방침 영역 -->
+    <div class="legal-notice">
+      <p class="private-notice">
+        ※ 본 서비스는 (주)알파코의 자체 기업 교육 컨설팅 및 예상 한도 조회 서비스입니다.
+      </p>
+      <p>
+        입력하신 정보는 예상 지원금 산출 및 맞춤 교육 안내 목적으로만 활용되며, 
+        자세한 사항은 <a href="https://open.alpaedu.co.kr/usrs/portal/alpaco/footerPopupForm.do?p_url_mode=D" target="_blank">개인정보처리방침</a>에서 확인하실 수 있습니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 최근 조회된 사업장 원본 데이터 (교육과정 추천 페이지로 이동할 때 사용)
+  let currentCompany = null;
+
+  function handleSearch() {
+    const rawInput = document.getElementById('bizNo').value.trim();
+    const bizNoInput = rawInput.replace(/-/g, '');
+
+    hideAllStates();
+    resetFormulaAccordion();
+
+    if (!/^\d{10}$/.test(bizNoInput)) {
+      showError('사업자등록번호 10자리를 정확히 입력해주세요. (하이픈은 자동으로 제거되어 처리됩니다)');
+      return;
+    }
+
+    document.getElementById('loadingBox').style.display = 'block';
+
+    fetchCompanyData(bizNoInput);
+  }
+
+  function hideAllStates() {
+    document.getElementById('resultBox').style.display = 'none';
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('errorBox').style.display = 'none';
+  }
+
+  function showError(message) {
+    document.getElementById('loadingBox').style.display = 'none';
+    document.getElementById('resultBox').style.display = 'none';
+    const errorBox = document.getElementById('errorBox');
+    errorBox.textContent = message;
+    errorBox.style.display = 'block';
+  }
+
+  async function fetchCompanyData(bizNo) {
+    let response;
+    try {
+      response = await fetch(`/business?businessNumber=${bizNo}`);
+    } catch (networkError) {
+      console.error('네트워크 오류:', networkError);
+      showError('네트워크 연결을 확인한 후 다시 시도해주세요.');
+      return;
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('응답 처리 오류:', parseError);
+      showError('서버 응답을 처리하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (response.status === 400) {
+      showError(data.message || '사업자등록번호 10자리를 정확히 입력해주세요.');
+      return;
+    }
+
+    if (response.status === 404) {
+      showError(data.message || '해당 사업자등록번호로 조회된 고용보험 사업장 정보가 없습니다. 번호를 다시 확인해주세요.');
+      return;
+    }
+
+    if (response.status === 502) {
+      showError('공공데이터(근로복지공단) API 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (!response.ok || !data.success) {
+      showError(data.message || '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    const business = data.businesses && data.businesses[0];
+    if (!business) {
+      showError('조회된 사업장 정보가 없습니다.');
+      return;
+    }
+
+    renderCompanyResult(business);
+  }
+
+  function renderCompanyResult(business) {
+    document.getElementById('loadingBox').style.display = 'none';
+
+    const workers = business.employeeCount || 0;
+    const companyName = business.businessName || '상호 정보 없음';
+    const industry = business.industryName || '업종 정보 없음';
+    const address = business.address || '주소 정보 없음';
+    const establishDate = formatDate(business.establishmentDate);
+    const formattedBizNo = formatBizNo(business.businessNumber);
+
+    currentCompany = {
+      businessName: companyName,
+      businessNumber: formattedBizNo,
+      employeeCount: workers,
+      industryName: industry,
+      address: address,
+      establishmentDate: establishDate,
+      compType: null,
+      limitRangeText: '기업 규모를 선택해주세요'
+    };
+
+    document.getElementById('companyTitle').innerText = `[${companyName} - ${formattedBizNo}] 조회 결과`;
+    document.getElementById('workerCount').innerText = `${workers}명 (고용보험 기준)`;
+    document.getElementById('compType').innerText = '선택 필요';
+    document.getElementById('bizNoDisplay').innerText = formattedBizNo;
+    document.getElementById('establishDate').innerText = establishDate;
+    document.getElementById('industryType').innerText = industry;
+    document.getElementById('addressDisplay').innerText = address;
+    document.getElementById('amountRange').innerText = '기업 규모를 선택해주세요';
+    document.getElementById('formulaDetail').innerHTML = '• 기업 규모를 선택하면 산출 기준이 표시됩니다.';
+    document.getElementById('tempValueNotice').style.display = 'none';
+
+    document.querySelectorAll('.size-btn').forEach(function (btn) {
+      btn.classList.remove('selected');
+    });
+
+    document.getElementById('resultBox').style.display = 'block';
+  }
+
+  // 사용자가 기업 규모를 직접 선택했을 때, 선택한 규모로 지원금을 다시 계산합니다.
+  function selectCompanyType(type) {
+    if (!currentCompany) return;
+
+    document.querySelectorAll('.size-btn').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.dataset.type === type);
+    });
+
+    currentCompany.compType = type;
+
+    const result = calculateSupportAmount(currentCompany.employeeCount, type);
+    currentCompany.limitRangeText = result.rangeText;
+
+    document.getElementById('compType').innerText = type;
+    document.getElementById('amountRange').innerText = result.rangeText;
+    document.getElementById('formulaDetail').innerHTML =
+      `• 추정 고용보험료 = ${currentCompany.employeeCount}명 × 월 ${result.salaryText} × 12개월 × ${result.taxRateText}<br>` +
+      `• 연간 지원 한도 = 추정 보험료 × ${result.supportRateText} (±5% 오차범위)`;
+
+    document.getElementById('tempValueNotice').style.display = result.confirmed ? 'none' : 'block';
+  }
+
+  function formatBizNo(bizNo) {
+    if (!bizNo) return '-';
+    const digits = String(bizNo).replace(/\D/g, '');
+    if (digits.length !== 10) return String(bizNo);
+    return digits.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const digits = String(dateStr).replace(/\D/g, '');
+    if (digits.length === 8) {
+      return `${digits.slice(0, 4)}.${digits.slice(4, 6)}.${digits.slice(6, 8)}`;
+    }
+    return String(dateStr);
+  }
+
+  // 기업 규모별 지원금 산출 설정값. 산식이 확정되면 이 객체의 숫자만 수정하면 됩니다.
+  // ⚠️ 중견기업 / 대기업 값은 아직 확정되지 않은 임시값입니다 (confirmed: false).
+  const SUPPORT_CONFIG = {
+    '중소기업': {
+      avgSalary: 2800000,
+      salaryText: '280만 원(중소)',
+      insuranceRate: 0.0025,
+      insuranceRateText: '0.25%',
+      supportRate: 2.4,
+      supportRateText: '240%',
+      confirmed: true
+    },
+    '중견기업': {
+      avgSalary: 3500000,
+      salaryText: '350만 원(중견, 임시값)',
+      insuranceRate: 0.0045,
+      insuranceRateText: '0.45%(임시값)',
+      supportRate: 1.3,
+      supportRateText: '130%(임시값)',
+      confirmed: false
+    },
+    '대기업': {
+      avgSalary: 5000000,
+      salaryText: '500만 원(대기업, 임시값)',
+      insuranceRate: 0.0065,
+      insuranceRateText: '0.65%(임시값)',
+      supportRate: 1.0,
+      supportRateText: '100%(임시값)',
+      confirmed: false
+    }
+  };
+
+  function calculateSupportAmount(workers, compType) {
+    const config = SUPPORT_CONFIG[compType];
+
+    const estimatedInsurance = workers * config.avgSalary * 12 * config.insuranceRate;
+    const totalLimit = estimatedInsurance * config.supportRate;
+
+    const minRange = Math.floor((totalLimit * 0.95) / 10000) * 10000;
+    const maxRange = Math.ceil((totalLimit * 1.05) / 10000) * 10000;
+
+    const minText = (minRange / 10000).toLocaleString();
+    const maxText = (maxRange / 10000).toLocaleString();
+
+    return {
+      rangeText: workers > 0 ? `약 ${minText}만 원 ~ ${maxText}만 원` : `조회불가`,
+      salaryText: config.salaryText,
+      taxRateText: config.insuranceRateText,
+      supportRateText: config.supportRateText,
+      confirmed: config.confirmed
+    };
+  }
+
+  function toggleFormula() {
+    const btn = document.getElementById('toggleBtn');
+    const content = document.getElementById('formulaContent');
+    btn.classList.toggle('active');
+    content.classList.toggle('open');
+  }
+
+  function resetFormulaAccordion() {
+    const btn = document.getElementById('toggleBtn');
+    const content = document.getElementById('formulaContent');
+    btn.classList.remove('active');
+    content.classList.remove('open');
+  }
+
+  function recommendCourse() {
+    if (!currentCompany) {
+      showError('먼저 사업자등록번호를 조회한 후 이용해주세요.');
+      return;
+    }
+
+    if (!currentCompany.compType) {
+      alert('기업 규모를 선택한 후 이용해주세요.');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      name: currentCompany.businessName,
+      bizNo: currentCompany.businessNumber,
+      workers: String(currentCompany.employeeCount),
+      compType: currentCompany.compType,
+      limitAmount: currentCompany.limitRangeText,
+      industry: currentCompany.industryName
+    });
+
+    window.location.href = `curation.html?${params.toString()}`;
+  }
+</script>
+
+</body>
+</html>
