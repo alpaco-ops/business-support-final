@@ -311,6 +311,16 @@
             background: #059669;
         }
 
+        .pdf-content {
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            width: 720px;
+            background: #ffffff;
+            padding: 32px;
+            font-family: Arial, 'Malgun Gothic', sans-serif;
+        }
+
         .no-data-notice {
             display: none;
             background: #fffbeb;
@@ -438,9 +448,16 @@
 
         <div class="btn-group" style="margin-top: 16px; border-top: none; padding-top: 0;">
             <button class="btn btn-secondary" onclick="goToStep('step-1')">처음부터 다시 선택</button>
+            <button type="button" class="btn btn-primary" id="pdfDownloadBtn" onclick="downloadPdf()">📄 결과 PDF로 저장</button>
         </div>
     </div>
 </div>
+
+<!-- PDF 캡처 전용 영역 (화면에는 보이지 않고, PDF 생성 시에만 내용을 채워 캡처합니다) -->
+<div class="pdf-content" id="pdfContent"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
     let companyData = {
@@ -624,6 +641,64 @@
         document.getElementById('btn-alpaco-inquiry').href = `${alpacoBaseUrl}&wr_subject=${encodedSubject}&wr_content=${encodedContent}`;
 
         goToStep('step-result');
+    }
+
+    // PDF에 담을 내용을 화면 밖 숨김 영역(#pdfContent)에 채워 넣습니다.
+    // 화면에 이미 표시된 요약/추천과정 내용을 그대로 재사용합니다.
+    function buildPdfContent() {
+        const pdfContent = document.getElementById('pdfContent');
+        const today = new Date().toLocaleDateString('ko-KR');
+
+        pdfContent.innerHTML = `
+            <div style="border-bottom: 3px solid #2563eb; padding-bottom: 16px; margin-bottom: 24px;">
+                <div style="font-size: 22px; font-weight: 800; color: #2563eb;">ALPACO</div>
+                <div style="font-size: 13px; color: #64748b; margin-top: 4px;">맞춤 교육과정 추천 결과 (${today} 기준)</div>
+            </div>
+            <div style="font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #0f172a;">[${companyData.name}] 맞춤 추천 큐레이션 결과</div>
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #2563eb;">[선택된 조건 종합]</div>
+            <div style="font-size: 13px; line-height: 1.8; color: #334155; margin-bottom: 20px;">${document.getElementById('summary-display').innerHTML}</div>
+            <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #0f172a;">[추천 맞춤 교육 과정]</div>
+            <div style="font-size: 13px; color: #334155;">${document.getElementById('recommended-courses-display').innerHTML}</div>
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+                ※ 본 자료는 (주)알파코의 자체 기업 교육 컨설팅 및 예상 한도 조회 서비스에서 생성되었습니다.<br>
+                ※ 예상 지원금은 추정치이며 실제 지원 한도와 다를 수 있습니다.
+            </div>
+        `;
+    }
+
+    async function downloadPdf() {
+        if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+            alert('PDF 생성 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 후 다시 시도해주세요.');
+            return;
+        }
+
+        const btn = document.getElementById('pdfDownloadBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'PDF 생성 중...';
+
+        try {
+            buildPdfContent();
+            const pdfContent = document.getElementById('pdfContent');
+            const canvas = await html2canvas(pdfContent, { scale: 2, backgroundColor: '#ffffff' });
+            const imgData = canvas.toDataURL('image/png');
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const margin = 24;
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+            pdf.save(`알파코_맞춤교육추천_${companyData.bizNo}.pdf`);
+        } catch (err) {
+            console.error('PDF 생성 오류:', err);
+            alert('PDF를 생성하는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     }
 </script>
 
