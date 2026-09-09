@@ -61,15 +61,15 @@
     /* 우선지원대상 뱃지 */
     .badge { display: inline-block; background-color: #dbeafe; color: #1e40af; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px; }
 
-    /* 우선지원대상기업 여부 선택 */
-    .preferential-section { margin-bottom: 16px; }
-    .preferential-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-    .help-toggle-btn { font-size: 11px; font-weight: 600; color: var(--primary); background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 2px 8px; cursor: pointer; }
-    .pref-select { display: flex; gap: 8px; margin-bottom: 8px; }
-    .pref-btn { flex: 1; padding: 10px 8px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); border-radius: 8px; background: #fff; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; }
-    .pref-btn:hover { border-color: #93c5fd; }
-    .pref-btn.selected { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
-    .help-content { display: none; font-size: 11px; color: #475569; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; line-height: 1.6; margin-bottom: 8px; }
+    /* 업종 선택 (우선지원대상기업 자동 판정) */
+    .industry-section { margin-bottom: 16px; }
+    .industry-select-label-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; }
+    .industry-select-label { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .help-toggle-btn { font-size: 11px; font-weight: 600; color: var(--primary); background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 2px 8px; cursor: pointer; flex-shrink: 0; }
+    #industrySelect { width: 100%; padding: 10px 12px; font-size: 14px; font-weight: 600; color: var(--text); border: 1px solid var(--border); border-radius: 8px; outline: none; background: #fff; cursor: pointer; }
+    #industrySelect:focus { border-color: var(--primary); }
+    .industry-result { display: none; font-size: 12px; color: #1e40af; margin-top: 8px; line-height: 1.5; }
+    .help-content { display: none; font-size: 11px; color: #475569; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; line-height: 1.6; margin-top: 8px; }
     .help-content.open { display: block; }
 
     /* 월평균급여 입력 */
@@ -189,18 +189,39 @@
       </div>
     </div>
 
-    <div class="preferential-section">
-      <div class="preferential-label">
-        우리 회사는 우선지원대상기업인가요?
-        <button type="button" class="help-toggle-btn" onclick="toggleHelp()">? 확인방법</button>
+    <div class="industry-section">
+      <div class="industry-select-label-row">
+        <label class="industry-select-label" for="industrySelect">업종을 선택해주세요 (한국표준산업분류 기준)</label>
+        <button type="button" class="help-toggle-btn" onclick="toggleHelp()">? 판정기준</button>
       </div>
-      <div class="pref-select" id="prefSelect">
-        <button type="button" class="pref-btn" data-value="true" onclick="selectPreferential(true)">예 (우선지원대상)</button>
-        <button type="button" class="pref-btn" data-value="false" onclick="selectPreferential(false)">아니요</button>
-      </div>
+      <select id="industrySelect" onchange="selectIndustry(this.value)">
+        <option value="" disabled selected>업종 선택</option>
+        <option value="A">A. 농업, 임업 및 어업</option>
+        <option value="B">B. 광업</option>
+        <option value="C">C. 제조업</option>
+        <option value="D">D. 전기, 가스, 증기 및 공기조절 공급업</option>
+        <option value="E">E. 수도, 하수 및 폐기물 처리, 원료 재생업</option>
+        <option value="F">F. 건설업</option>
+        <option value="G">G. 도매 및 소매업</option>
+        <option value="H">H. 운수 및 창고업</option>
+        <option value="I">I. 숙박 및 음식점업</option>
+        <option value="J">J. 정보통신업</option>
+        <option value="K">K. 금융 및 보험업</option>
+        <option value="L">L. 부동산업</option>
+        <option value="M">M. 전문, 과학 및 기술 서비스업</option>
+        <option value="N">N. 사업시설 관리, 사업 지원 및 임대 서비스업</option>
+        <option value="O">O. 공공 행정, 국방 및 사회보장 행정</option>
+        <option value="P">P. 교육 서비스업</option>
+        <option value="Q">Q. 보건업 및 사회복지 서비스업</option>
+        <option value="R">R. 예술, 스포츠 및 여가관련 서비스업</option>
+        <option value="S">S. 협회 및 단체, 수리 및 기타 개인 서비스업</option>
+        <option value="T">T. 가구 내 고용활동 및 자가소비 생산활동</option>
+        <option value="U">U. 국제 및 외국기관</option>
+      </select>
+      <p class="industry-result" id="industryResult"></p>
       <div class="help-content" id="helpContent">
-        <strong>우선지원대상기업이란?</strong> 업종별로 정해진 상시근로자 수 기준(예시: 제조업 500명, 도소매업 200명, 그 외 서비스업 100명 이하 등 업종마다 다름) 이내인 중소기업을 말하며, 대부분의 중소기업이 해당됩니다.<br>
-        정확한 여부는 <strong>고용24(work24.go.kr)</strong> 기업회원 로그인 후 조회하시거나, <strong>근로복지공단(1588-0075)</strong>으로 문의하시면 확인하실 수 있습니다. (위 예시 기준은 참고용이며 실제 업종별 기준과 다를 수 있습니다.)
+        업종별 상시근로자 수 기준(고용보험법 시행령 별표1: 제조업 500명 / 광업·건설업·운수창고업·정보통신업·사업시설관리업·전문과학기술서비스업·보건복지서비스업 300명 / 도소매업·숙박음식업·금융보험업·예술스포츠여가서비스업 200명 / 그 밖의 업종 100명 이하)과 이미 조회된 상시근로자 수를 비교해 자동으로 판정합니다.<br>
+        업종 대분류 기준의 자동 판정이라 세부 예외(예: 제조업 중 일부 세분류)가 실제와 다를 수 있습니다. 정확한 여부는 <strong>고용24(work24.go.kr)</strong> 또는 <strong>근로복지공단(1588-0075)</strong>에서 다시 확인하실 수 있습니다.
       </div>
     </div>
 
@@ -215,7 +236,7 @@
 
     <div class="amount-card">
       <div class="label">2026 연간 예상 지원금 한도액</div>
-      <div class="value" id="amountRange">우선지원대상기업 여부를 선택해주세요</div>
+      <div class="value" id="amountRange">업종을 선택해주세요</div>
     </div>
 
     <div class="temp-value-notice" id="tempValueNotice">
@@ -379,7 +400,8 @@
       establishmentDate: establishDate,
       compType: null,
       isPreferential: null,
-      limitRangeText: '우선지원대상기업 여부를 선택해주세요'
+      industryCode: null,
+      limitRangeText: '업종을 선택해주세요'
     };
 
     document.getElementById('companyTitle').innerText = `[${companyName} - ${formattedBizNo}] 조회 결과`;
@@ -388,15 +410,13 @@
     document.getElementById('establishDate').innerText = establishDate;
     document.getElementById('addressDisplay').innerText = address;
     document.getElementById('insuranceTierDisplay').innerText = '선택 필요';
-    document.getElementById('amountRange').innerText = '우선지원대상기업 여부를 선택해주세요';
-    document.getElementById('formulaDetail').innerHTML = '• 우선지원대상기업 여부를 선택하면 산출 기준이 표시됩니다.';
+    document.getElementById('amountRange').innerText = '업종을 선택해주세요';
+    document.getElementById('formulaDetail').innerHTML = '• 업종을 선택하면 우선지원대상기업 여부와 산출 기준이 표시됩니다.';
     document.getElementById('tempValueNotice').style.display = 'none';
     document.getElementById('helpContent').classList.remove('open');
     document.getElementById('avgSalaryInput').value = 300;
-
-    document.querySelectorAll('.pref-btn').forEach(function (btn) {
-      btn.classList.remove('selected');
-    });
+    document.getElementById('industrySelect').value = '';
+    document.getElementById('industryResult').style.display = 'none';
 
     // 업종 정보가 없으면 카드 자체를 숨깁니다.
     const industryCard = document.getElementById('industryCard');
@@ -414,16 +434,42 @@
     document.getElementById('helpContent').classList.toggle('open');
   }
 
-  // 사용자(교육담당자)가 우선지원대상기업 여부를 직접 선택했을 때, 지원금을 다시 계산합니다.
-  function selectPreferential(isPreferential) {
-    if (!currentCompany) return;
+  // 한국표준산업분류(대분류) -> 우선지원대상기업 판정 기준 상시근로자 수
+  // 고용보험법 시행령 [별표 1] <개정 2025. 10. 1.> 기준. 세부 예외(제조업 중 일부 세분류 등)는 반영하지 않은 대분류 기준입니다.
+  const INDUSTRY_THRESHOLD = {
+    C: 500,
+    B: 300, F: 300, H: 300, J: 300, M: 300, N: 300, Q: 300,
+    G: 200, I: 200, K: 200, R: 200,
+    A: 100, D: 100, E: 100, L: 100, O: 100, P: 100, S: 100, T: 100, U: 100
+  };
 
-    document.querySelectorAll('.pref-btn').forEach(function (btn) {
-      btn.classList.toggle('selected', btn.dataset.value === String(isPreferential));
-    });
+  const INDUSTRY_NAMES = {
+    A: '농업, 임업 및 어업', B: '광업', C: '제조업', D: '전기, 가스, 증기 및 공기조절 공급업',
+    E: '수도, 하수 및 폐기물 처리, 원료 재생업', F: '건설업', G: '도매 및 소매업', H: '운수 및 창고업',
+    I: '숙박 및 음식점업', J: '정보통신업', K: '금융 및 보험업', L: '부동산업',
+    M: '전문, 과학 및 기술 서비스업', N: '사업시설 관리, 사업 지원 및 임대 서비스업',
+    O: '공공 행정, 국방 및 사회보장 행정', P: '교육 서비스업', Q: '보건업 및 사회복지 서비스업',
+    R: '예술, 스포츠 및 여가관련 서비스업', S: '협회 및 단체, 수리 및 기타 개인 서비스업',
+    T: '가구 내 고용활동 및 자가소비 생산활동', U: '국제 및 외국기관'
+  };
 
+  // 사용자(교육담당자)가 업종을 선택하면, 이미 조회된 상시근로자 수와 비교해 우선지원대상기업 여부를 자동 판정합니다.
+  function selectIndustry(code) {
+    if (!currentCompany || !code) return;
+
+    const threshold = INDUSTRY_THRESHOLD[code];
+    const industryName = INDUSTRY_NAMES[code];
+    const isPreferential = currentCompany.employeeCount <= threshold;
+
+    currentCompany.industryCode = code;
     currentCompany.isPreferential = isPreferential;
     currentCompany.compType = isPreferential ? '우선지원대상기업' : '일반기업(비우선지원대상)';
+
+    const resultEl = document.getElementById('industryResult');
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = isPreferential
+      ? `✓ "${industryName}"은(는) 상시근로자 ${threshold.toLocaleString()}명 이하가 우선지원대상기업 기준입니다. 귀사(${currentCompany.employeeCount}명)는 <strong>우선지원대상기업</strong>에 해당합니다.`
+      : `"${industryName}"은(는) 상시근로자 ${threshold.toLocaleString()}명 이하가 우선지원대상기업 기준입니다. 귀사(${currentCompany.employeeCount}명)는 <strong>우선지원대상기업에 해당하지 않습니다</strong>.`;
 
     recalculateAmount();
   }
@@ -536,7 +582,7 @@
     }
 
     if (!currentCompany.compType) {
-      alert('기업 규모를 선택한 후 이용해주세요.');
+      alert('업종을 선택한 후 이용해주세요.');
       return;
     }
 
@@ -546,7 +592,8 @@
       workers: String(currentCompany.employeeCount),
       compType: currentCompany.compType,
       limitAmount: currentCompany.limitRangeText,
-      industry: currentCompany.industryName
+      industry: currentCompany.industryName,
+      ksicIndustry: `${currentCompany.industryCode}. ${INDUSTRY_NAMES[currentCompany.industryCode]}`
     });
 
     window.location.href = `curation.html?${params.toString()}`;

@@ -466,7 +466,8 @@
         workers: "60",
         compType: "우선지원대상기업",
         limitAmount: "약 1,400만 원",
-        industry: "교육서비스업 / 인력개발"
+        industry: "교육서비스업 / 인력개발",
+        ksicIndustry: "P. 교육 서비스업"
     };
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -478,6 +479,7 @@
             companyData.compType = urlParams.get('compType') || '우선지원대상기업';
             companyData.limitAmount = urlParams.get('limitAmount') || '약 1,400만 원';
             companyData.industry = urlParams.get('industry') || '교육서비스업';
+            companyData.ksicIndustry = urlParams.get('ksicIndustry') || '';
         } else {
             // 메인 화면(index.html)을 거치지 않고 curation.html에 직접 들어온 경우
             // 아래 companyData는 실제 조회 결과가 아닌 예시 데이터임을 명확히 안내합니다.
@@ -585,6 +587,7 @@
             summaryEl.innerHTML = `
                 • <strong>조회 기업:</strong> ${companyData.name} (사업자번호: ${companyData.bizNo})<br>
                 • <strong>주요 업종:</strong> ${companyData.industry}<br>
+                • <strong>표준산업분류:</strong> ${companyData.ksicIndustry}<br>
                 • <strong>상시 근로자:</strong> ${companyData.workers}명 (${companyData.compType})<br>
                 • <strong>예상 지원금 한도:</strong> ${companyData.limitAmount}<br>
                 • <strong>교육 목적:</strong> 필수 법정의무교육 (${packageType})
@@ -597,7 +600,7 @@
                 </div>
             `;
 
-            inquiryContent = `[맞춤 교육 추천 문의]\n- 기업명: ${companyData.name}\n- 사업자번호: ${companyData.bizNo}\n- 업종: ${companyData.industry}\n- 상시근로자수: ${companyData.workers}명 (${companyData.compType})\n- 교육목적: 필수 법정의무교육\n- 추천패키지: ${packageType}\n- 예상지원금: ${companyData.limitAmount}\n- 요청사항: 연간 교육 지원금 산출 한도 내에서 견적 및 오프라인 출강 가능 여부 문의합니다.`;
+            inquiryContent = `[맞춤 교육 추천 문의]\n- 기업명: ${companyData.name}\n- 사업자번호: ${companyData.bizNo}\n- 업종: ${companyData.industry}\n- 표준산업분류: ${companyData.ksicIndustry}\n- 상시근로자수: ${companyData.workers}명 (${companyData.compType})\n- 교육목적: 필수 법정의무교육\n- 추천패키지: ${packageType}\n- 예상지원금: ${companyData.limitAmount}\n- 요청사항: 연간 교육 지원금 산출 한도 내에서 견적 및 오프라인 출강 가능 여부 문의합니다.`;
 
         } else {
             const targetsStr = selectedTargets.length > 0 ? selectedTargets.join(', ') : '미선택 (전사 대상 추천)';
@@ -607,6 +610,7 @@
             summaryEl.innerHTML = `
                 • <strong>조회 기업:</strong> ${companyData.name} (사업자번호: ${companyData.bizNo})<br>
                 • <strong>주요 업종:</strong> ${companyData.industry}<br>
+                • <strong>표준산업분류:</strong> ${companyData.ksicIndustry}<br>
                 • <strong>상시 근로자:</strong> ${companyData.workers}명 (${companyData.compType})<br>
                 • <strong>예상 지원금 한도:</strong> ${companyData.limitAmount}<br>
                 • <strong>선택 대상:</strong> ${targetsStr}<br>
@@ -629,7 +633,7 @@
                 </div>
             `;
 
-            inquiryContent = `[맞춤 교육 추천 문의]\n- 기업명: ${companyData.name}\n- 사업자번호: ${companyData.bizNo}\n- 업종: ${companyData.industry}\n- 상시근로자수: ${companyData.workers}명 (${companyData.compType})\n- 교육목적: 임직원 역량 강화\n- 예상지원금: ${companyData.limitAmount}\n- 선택대상: ${targetsStr}\n- 핵심주제: ${topicsStr}\n- 진행방식: ${modesStr}\n- 요청사항: 관련 상세 제안서 및 견적서 요청드립니다.`;
+            inquiryContent = `[맞춤 교육 추천 문의]\n- 기업명: ${companyData.name}\n- 사업자번호: ${companyData.bizNo}\n- 업종: ${companyData.industry}\n- 표준산업분류: ${companyData.ksicIndustry}\n- 상시근로자수: ${companyData.workers}명 (${companyData.compType})\n- 교육목적: 임직원 역량 강화\n- 예상지원금: ${companyData.limitAmount}\n- 선택대상: ${targetsStr}\n- 핵심주제: ${topicsStr}\n- 진행방식: ${modesStr}\n- 요청사항: 관련 상세 제안서 및 견적서 요청드립니다.`;
         }
 
         const alpacoBaseUrl = "https://corp.alpaco.co.kr/bbs/write.php?bo_table=online";
