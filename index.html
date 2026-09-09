@@ -79,6 +79,8 @@
     #avgSalaryInput { flex: 1; padding: 10px 12px; font-size: 15px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border 0.2s; }
     #avgSalaryInput:focus { border-color: var(--primary); }
     .salary-input-suffix { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .salary-unknown-btn { flex-shrink: 0; font-size: 12px; font-weight: 600; color: var(--text-muted); background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; white-space: nowrap; }
+    .salary-unknown-btn:hover { border-color: #93c5fd; color: var(--primary); }
     .salary-input-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
 
     /* 지원금 한도 카드 */
@@ -228,10 +230,11 @@
     <div class="salary-input-section">
       <label class="salary-input-label" for="avgSalaryInput">우리 회사 월평균급여 (만원)</label>
       <div class="salary-input-wrapper">
-        <input type="number" id="avgSalaryInput" value="300" min="1" step="1" oninput="onAvgSalaryChange()">
+        <input type="number" id="avgSalaryInput" placeholder="예: 320" min="1" step="1" oninput="onAvgSalaryChange()">
         <span class="salary-input-suffix">만원</span>
+        <button type="button" class="salary-unknown-btn" onclick="useDefaultSalary()">모르겠어요</button>
       </div>
-      <p class="salary-input-hint">기본값(300만원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균)은 예시이며, 실제 우리 회사 평균급여를 알고 계시면 직접 입력해 더 정확한 예상치를 확인하세요.</p>
+      <p class="salary-input-hint">실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다. 모르시면 "모르겠어요"를 눌러 참고용 평균값(300만원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균)을 적용해보세요.</p>
     </div>
 
     <div class="amount-card">
@@ -414,7 +417,7 @@
     document.getElementById('formulaDetail').innerHTML = '• 업종을 선택하면 우선지원대상기업 여부와 산출 기준이 표시됩니다.';
     document.getElementById('tempValueNotice').style.display = 'none';
     document.getElementById('helpContent').classList.remove('open');
-    document.getElementById('avgSalaryInput').value = 300;
+    document.getElementById('avgSalaryInput').value = '';
     document.getElementById('industrySelect').value = '';
     document.getElementById('industryResult').style.display = 'none';
 
@@ -478,6 +481,12 @@
   function onAvgSalaryChange() {
     if (!currentCompany || currentCompany.isPreferential === null) return;
     recalculateAmount();
+  }
+
+  // "모르겠어요" 클릭 시 참고용 평균값(300만원)을 입력창에 채우고 다시 계산합니다.
+  function useDefaultSalary() {
+    document.getElementById('avgSalaryInput').value = 300;
+    onAvgSalaryChange();
   }
 
   function getAvgSalaryInputValue() {
