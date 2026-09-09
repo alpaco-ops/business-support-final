@@ -349,7 +349,7 @@
 
     <div class="company-info-card">
         <div>
-            <strong id="display-company-name">(주)알파코 <span style="font-size: 12px; font-weight: normal; color: #64748b;" id="display-biz-no">(사업자번호: 107-86-72100)</span></strong>
+            <strong id="display-company-name">OO기업 <span style="font-size: 12px; font-weight: normal; color: #64748b;" id="display-biz-no">(사업자번호: 123-45-67890)</span></strong>
             <p id="display-worker-info">상시 근로자 60명 · 중소기업 구분</p>
             <p id="display-industry" style="font-size: 12px; color: #3b82f6; margin-top: 2px;">업종: 교육서비스업 / 인력개발</p>
         </div>
@@ -461,10 +461,10 @@
 
 <script>
     let companyData = {
-        name: "(주)알파코",
-        bizNo: "107-86-72100",
+        name: "OO기업",
+        bizNo: "123-45-67890",
         workers: "60",
-        compType: "중소기업",
+        compType: "우선지원대상기업",
         limitAmount: "약 1,400만 원",
         industry: "교육서비스업 / 인력개발"
     };
@@ -473,9 +473,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('name')) {
             companyData.name = urlParams.get('name');
-            companyData.bizNo = urlParams.get('bizNo') || '107-86-72100';
+            companyData.bizNo = urlParams.get('bizNo') || '123-45-67890';
             companyData.workers = urlParams.get('workers') || '60';
-            companyData.compType = urlParams.get('compType') || '중소기업';
+            companyData.compType = urlParams.get('compType') || '우선지원대상기업';
             companyData.limitAmount = urlParams.get('limitAmount') || '약 1,400만 원';
             companyData.industry = urlParams.get('industry') || '교육서비스업';
         } else {
