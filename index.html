@@ -72,6 +72,15 @@
     .help-content { display: none; font-size: 11px; color: #475569; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; line-height: 1.6; margin-bottom: 8px; }
     .help-content.open { display: block; }
 
+    /* 월평균급여 입력 */
+    .salary-input-section { margin-bottom: 16px; }
+    .salary-input-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: block; }
+    .salary-input-wrapper { display: flex; align-items: center; gap: 8px; }
+    #avgSalaryInput { flex: 1; padding: 10px 12px; font-size: 15px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border 0.2s; }
+    #avgSalaryInput:focus { border-color: var(--primary); }
+    .salary-input-suffix { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .salary-input-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
+
     /* 지원금 한도 카드 */
     .amount-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
     .amount-card .label { font-size: 13px; color: #1e40af; margin-bottom: 6px; font-weight: 600; }
@@ -195,13 +204,22 @@
       </div>
     </div>
 
+    <div class="salary-input-section">
+      <label class="salary-input-label" for="avgSalaryInput">우리 회사 월평균급여 (만원)</label>
+      <div class="salary-input-wrapper">
+        <input type="number" id="avgSalaryInput" value="300" min="1" step="1" oninput="onAvgSalaryChange()">
+        <span class="salary-input-suffix">만원</span>
+      </div>
+      <p class="salary-input-hint">기본값(300만원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균)은 예시이며, 실제 우리 회사 평균급여를 알고 계시면 직접 입력해 더 정확한 예상치를 확인하세요.</p>
+    </div>
+
     <div class="amount-card">
       <div class="label">2026 연간 예상 지원금 한도액</div>
       <div class="value" id="amountRange">우선지원대상기업 여부를 선택해주세요</div>
     </div>
 
     <div class="temp-value-notice" id="tempValueNotice">
-      ⚠️ 월평균급여는 실제 데이터가 아닌 예시 가정값(280만 원)이며, 우선지원대상기업 여부도 자가 판단 기준입니다. 실제 지원 한도와 차이가 있을 수 있습니다.
+      ⚠️ 위 계산은 입력하신 월평균급여와 자가 판단하신 우선지원대상기업 여부를 기준으로 한 예상치입니다. 실제 지원 한도와 차이가 있을 수 있습니다.
     </div>
 
     <div class="formula-accordion">
@@ -314,13 +332,32 @@
       return;
     }
 
-    const business = data.businesses && data.businesses[0];
+    const business = pickPrimaryBusiness(data.businesses);
     if (!business) {
       showError('조회된 사업장 정보가 없습니다.');
       return;
     }
 
     renderCompanyResult(business);
+  }
+
+  // 한 사업자등록번호에 여러 사업장 이력이 조회되는 경우,
+  // 상시근로자 수가 0명인(비활성 추정) 항목은 제외하고 설립일이 가장 최근인 것을 사용합니다.
+  function pickPrimaryBusiness(businesses) {
+    if (!businesses || businesses.length === 0) return null;
+    if (businesses.length === 1) return businesses[0];
+
+    const sortedByRecent = businesses.slice().sort(function (a, b) {
+      const dateA = String(a.establishmentDate || '');
+      const dateB = String(b.establishmentDate || '');
+      return dateB.localeCompare(dateA);
+    });
+
+    const withEmployees = sortedByRecent.filter(function (b) {
+      return (b.employeeCount || 0) > 0;
+    });
+
+    return withEmployees.length > 0 ? withEmployees[0] : sortedByRecent[0];
   }
 
   function renderCompanyResult(business) {
@@ -355,6 +392,7 @@
     document.getElementById('formulaDetail').innerHTML = '• 우선지원대상기업 여부를 선택하면 산출 기준이 표시됩니다.';
     document.getElementById('tempValueNotice').style.display = 'none';
     document.getElementById('helpContent').classList.remove('open');
+    document.getElementById('avgSalaryInput').value = 300;
 
     document.querySelectorAll('.pref-btn').forEach(function (btn) {
       btn.classList.remove('selected');
@@ -387,7 +425,25 @@
     currentCompany.isPreferential = isPreferential;
     currentCompany.compType = isPreferential ? '우선지원대상기업' : '일반기업(비우선지원대상)';
 
-    const result = calculateSupportAmount(currentCompany.employeeCount, isPreferential);
+    recalculateAmount();
+  }
+
+  // 월평균급여 입력값이 바뀌면, 이미 우선지원대상 여부가 선택된 상태에서만 다시 계산합니다.
+  function onAvgSalaryChange() {
+    if (!currentCompany || currentCompany.isPreferential === null) return;
+    recalculateAmount();
+  }
+
+  function getAvgSalaryInputValue() {
+    const input = document.getElementById('avgSalaryInput');
+    const val = parseFloat(input.value);
+    if (!val || val <= 0) return 3000000;
+    return val * 10000;
+  }
+
+  function recalculateAmount() {
+    const avgSalary = getAvgSalaryInputValue();
+    const result = calculateSupportAmount(currentCompany.employeeCount, currentCompany.isPreferential, avgSalary);
     currentCompany.limitRangeText = result.rangeText;
 
     document.getElementById('insuranceTierDisplay').innerText = `${result.tierText} (${result.taxRateText})`;
@@ -417,9 +473,8 @@
 
   // 고용안정·직업능력개발사업 보험료율/지원배율 산출 기준.
   // 고용보험법 시행령 및 사업주 직업능력개발훈련 지원규정 기준 (150인/1,000인, 우선지원대상기업 여부).
-  // ⚠️ 월평균급여(AVG_SALARY_ASSUMPTION)는 실제 급여 데이터가 아닌 예시 가정값입니다. 산식이 확정되면 이 숫자만 수정하면 됩니다.
-  const AVG_SALARY_ASSUMPTION = 2800000; // 월평균급여 예시 가정값 (실제 데이터 아님)
-  const MIN_SUPPORT_LIMIT = 5000000;     // 연간 지원한도 최소 보장액
+  // ⚠️ 월평균급여는 실제 급여 데이터가 아니라 사용자가 입력한(또는 기본 예시인 300만원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균) 가정값입니다.
+  const MIN_SUPPORT_LIMIT = 5000000; // 연간 지원한도 최소 보장액
 
   function getInsuranceRateInfo(workers, isPreferential) {
     if (workers < 150) {
@@ -433,12 +488,12 @@
     return { rate: 0.0085, rateText: '0.85%', tierText: '1,000인 이상' };
   }
 
-  function calculateSupportAmount(workers, isPreferential) {
+  function calculateSupportAmount(workers, isPreferential, avgSalary) {
     const insuranceInfo = getInsuranceRateInfo(workers, isPreferential);
     const supportRate = isPreferential ? 2.4 : 1.0;
     const supportRateText = isPreferential ? '240%(우선지원대상기업)' : '100%';
 
-    const estimatedInsurance = workers * AVG_SALARY_ASSUMPTION * 12 * insuranceInfo.rate;
+    const estimatedInsurance = workers * avgSalary * 12 * insuranceInfo.rate;
     let totalLimit = estimatedInsurance * supportRate;
 
     // 연간 지원한도 최소 보장액 적용
@@ -452,7 +507,7 @@
 
     return {
       rangeText: workers > 0 ? `약 ${minText}만 원 ~ ${maxText}만 원` : `조회불가`,
-      salaryText: `${(AVG_SALARY_ASSUMPTION / 10000).toLocaleString()}만 원(예시 가정값)`,
+      salaryText: `${(avgSalary / 10000).toLocaleString()}만 원(입력값)`,
       taxRateText: insuranceInfo.rateText,
       supportRateText: supportRateText,
       tierText: insuranceInfo.tierText
