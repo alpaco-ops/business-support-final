@@ -61,9 +61,16 @@
     /* 우선지원대상 뱃지 */
     .badge { display: inline-block; background-color: #dbeafe; color: #1e40af; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; margin-left: 4px; }
 
-    /* 기업 규모 선택 드롭다운 (기업 구분 카드 안에 위치) */
-    .comp-type-select { font-size: 13px; font-weight: 700; color: var(--text); background: transparent; border: none; padding: 0; margin: 0; width: 100%; cursor: pointer; }
-    .comp-type-select:focus { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+    /* 우선지원대상기업 여부 선택 */
+    .preferential-section { margin-bottom: 16px; }
+    .preferential-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .help-toggle-btn { font-size: 11px; font-weight: 600; color: var(--primary); background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 2px 8px; cursor: pointer; }
+    .pref-select { display: flex; gap: 8px; margin-bottom: 8px; }
+    .pref-btn { flex: 1; padding: 10px 8px; font-size: 13px; font-weight: 700; border: 2px solid var(--border); border-radius: 8px; background: #fff; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease; }
+    .pref-btn:hover { border-color: #93c5fd; }
+    .pref-btn.selected { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+    .help-content { display: none; font-size: 11px; color: #475569; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; line-height: 1.6; margin-bottom: 8px; }
+    .help-content.open { display: block; }
 
     /* 지원금 한도 카드 */
     .amount-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 12px; }
@@ -148,13 +155,8 @@
     
     <div class="info-grid">
       <div class="info-card">
-        <span class="info-label">기업 구분</span>
-        <select class="comp-type-select" id="compTypeSelect" onchange="selectCompanyType(this.value)">
-          <option value="" disabled selected>선택 필요</option>
-          <option value="중소기업">중소기업</option>
-          <option value="중견기업">중견기업</option>
-          <option value="대기업">대기업</option>
-        </select>
+        <span class="info-label">적용 보험료율</span>
+        <span class="info-val" id="insuranceTierDisplay">선택 필요</span>
       </div>
       <div class="info-card">
         <span class="info-label">상시 근로자 수</span>
@@ -178,13 +180,28 @@
       </div>
     </div>
 
+    <div class="preferential-section">
+      <div class="preferential-label">
+        우리 회사는 우선지원대상기업인가요?
+        <button type="button" class="help-toggle-btn" onclick="toggleHelp()">? 확인방법</button>
+      </div>
+      <div class="pref-select" id="prefSelect">
+        <button type="button" class="pref-btn" data-value="true" onclick="selectPreferential(true)">예 (우선지원대상)</button>
+        <button type="button" class="pref-btn" data-value="false" onclick="selectPreferential(false)">아니요</button>
+      </div>
+      <div class="help-content" id="helpContent">
+        <strong>우선지원대상기업이란?</strong> 업종별로 정해진 상시근로자 수 기준(예시: 제조업 500명, 도소매업 200명, 그 외 서비스업 100명 이하 등 업종마다 다름) 이내인 중소기업을 말하며, 대부분의 중소기업이 해당됩니다.<br>
+        정확한 여부는 <strong>고용24(work24.go.kr)</strong> 기업회원 로그인 후 조회하시거나, <strong>근로복지공단(1588-0075)</strong>으로 문의하시면 확인하실 수 있습니다. (위 예시 기준은 참고용이며 실제 업종별 기준과 다를 수 있습니다.)
+      </div>
+    </div>
+
     <div class="amount-card">
       <div class="label">2026 연간 예상 지원금 한도액</div>
-      <div class="value" id="amountRange">기업 규모를 선택해주세요</div>
+      <div class="value" id="amountRange">우선지원대상기업 여부를 선택해주세요</div>
     </div>
 
     <div class="temp-value-notice" id="tempValueNotice">
-      ⚠️ 중견기업·대기업 산식은 아직 확정되지 않은 임시값입니다. 예상 금액이며 실제 지원 한도와 다를 수 있습니다.
+      ⚠️ 월평균급여는 실제 데이터가 아닌 예시 가정값(280만 원)이며, 우선지원대상기업 여부도 자가 판단 기준입니다. 실제 지원 한도와 차이가 있을 수 있습니다.
     </div>
 
     <div class="formula-accordion">
@@ -324,7 +341,8 @@
       address: address,
       establishmentDate: establishDate,
       compType: null,
-      limitRangeText: '기업 규모를 선택해주세요'
+      isPreferential: null,
+      limitRangeText: '우선지원대상기업 여부를 선택해주세요'
     };
 
     document.getElementById('companyTitle').innerText = `[${companyName} - ${formattedBizNo}] 조회 결과`;
@@ -332,9 +350,15 @@
     document.getElementById('bizNoDisplay').innerText = formattedBizNo;
     document.getElementById('establishDate').innerText = establishDate;
     document.getElementById('addressDisplay').innerText = address;
-    document.getElementById('amountRange').innerText = '기업 규모를 선택해주세요';
-    document.getElementById('formulaDetail').innerHTML = '• 기업 규모를 선택하면 산출 기준이 표시됩니다.';
+    document.getElementById('insuranceTierDisplay').innerText = '선택 필요';
+    document.getElementById('amountRange').innerText = '우선지원대상기업 여부를 선택해주세요';
+    document.getElementById('formulaDetail').innerHTML = '• 우선지원대상기업 여부를 선택하면 산출 기준이 표시됩니다.';
     document.getElementById('tempValueNotice').style.display = 'none';
+    document.getElementById('helpContent').classList.remove('open');
+
+    document.querySelectorAll('.pref-btn').forEach(function (btn) {
+      btn.classList.remove('selected');
+    });
 
     // 업종 정보가 없으면 카드 자체를 숨깁니다.
     const industryCard = document.getElementById('industryCard');
@@ -345,26 +369,34 @@
       industryCard.style.display = 'none';
     }
 
-    document.getElementById('compTypeSelect').value = '';
-
     document.getElementById('resultBox').style.display = 'block';
   }
 
-  // 사용자가 기업 규모를 직접 선택했을 때, 선택한 규모로 지원금을 다시 계산합니다.
-  function selectCompanyType(type) {
-    if (!currentCompany || !type) return;
+  function toggleHelp() {
+    document.getElementById('helpContent').classList.toggle('open');
+  }
 
-    currentCompany.compType = type;
+  // 사용자(교육담당자)가 우선지원대상기업 여부를 직접 선택했을 때, 지원금을 다시 계산합니다.
+  function selectPreferential(isPreferential) {
+    if (!currentCompany) return;
 
-    const result = calculateSupportAmount(currentCompany.employeeCount, type);
+    document.querySelectorAll('.pref-btn').forEach(function (btn) {
+      btn.classList.toggle('selected', btn.dataset.value === String(isPreferential));
+    });
+
+    currentCompany.isPreferential = isPreferential;
+    currentCompany.compType = isPreferential ? '우선지원대상기업' : '일반기업(비우선지원대상)';
+
+    const result = calculateSupportAmount(currentCompany.employeeCount, isPreferential);
     currentCompany.limitRangeText = result.rangeText;
 
+    document.getElementById('insuranceTierDisplay').innerText = `${result.tierText} (${result.taxRateText})`;
     document.getElementById('amountRange').innerText = result.rangeText;
     document.getElementById('formulaDetail').innerHTML =
       `• 추정 고용보험료 = ${currentCompany.employeeCount}명 × 월 ${result.salaryText} × 12개월 × ${result.taxRateText}<br>` +
-      `• 연간 지원 한도 = 추정 보험료 × ${result.supportRateText} (±5% 오차범위)`;
+      `• 연간 지원 한도 = 추정 보험료 × ${result.supportRateText}, 최소 500만 원 보장 (±5% 오차범위)`;
 
-    document.getElementById('tempValueNotice').style.display = result.confirmed ? 'none' : 'block';
+    document.getElementById('tempValueNotice').style.display = 'block';
   }
 
   function formatBizNo(bizNo) {
@@ -383,43 +415,34 @@
     return String(dateStr);
   }
 
-  // 기업 규모별 지원금 산출 설정값. 산식이 확정되면 이 객체의 숫자만 수정하면 됩니다.
-  // ⚠️ 중견기업 / 대기업 값은 아직 확정되지 않은 임시값입니다 (confirmed: false).
-  const SUPPORT_CONFIG = {
-    '중소기업': {
-      avgSalary: 2800000,
-      salaryText: '280만 원(중소)',
-      insuranceRate: 0.0025,
-      insuranceRateText: '0.25%',
-      supportRate: 2.4,
-      supportRateText: '240%',
-      confirmed: true
-    },
-    '중견기업': {
-      avgSalary: 3500000,
-      salaryText: '350만 원(중견, 임시값)',
-      insuranceRate: 0.0045,
-      insuranceRateText: '0.45%(임시값)',
-      supportRate: 1.3,
-      supportRateText: '130%(임시값)',
-      confirmed: false
-    },
-    '대기업': {
-      avgSalary: 5000000,
-      salaryText: '500만 원(대기업, 임시값)',
-      insuranceRate: 0.0065,
-      insuranceRateText: '0.65%(임시값)',
-      supportRate: 1.0,
-      supportRateText: '100%(임시값)',
-      confirmed: false
+  // 고용안정·직업능력개발사업 보험료율/지원배율 산출 기준.
+  // 고용보험법 시행령 및 사업주 직업능력개발훈련 지원규정 기준 (150인/1,000인, 우선지원대상기업 여부).
+  // ⚠️ 월평균급여(AVG_SALARY_ASSUMPTION)는 실제 급여 데이터가 아닌 예시 가정값입니다. 산식이 확정되면 이 숫자만 수정하면 됩니다.
+  const AVG_SALARY_ASSUMPTION = 2800000; // 월평균급여 예시 가정값 (실제 데이터 아님)
+  const MIN_SUPPORT_LIMIT = 5000000;     // 연간 지원한도 최소 보장액
+
+  function getInsuranceRateInfo(workers, isPreferential) {
+    if (workers < 150) {
+      return { rate: 0.0025, rateText: '0.25%', tierText: '150인 미만' };
     }
-  };
+    if (workers < 1000) {
+      return isPreferential
+        ? { rate: 0.0045, rateText: '0.45%', tierText: '150인 이상(우선지원대상기업)' }
+        : { rate: 0.0065, rateText: '0.65%', tierText: '150인~999인' };
+    }
+    return { rate: 0.0085, rateText: '0.85%', tierText: '1,000인 이상' };
+  }
 
-  function calculateSupportAmount(workers, compType) {
-    const config = SUPPORT_CONFIG[compType];
+  function calculateSupportAmount(workers, isPreferential) {
+    const insuranceInfo = getInsuranceRateInfo(workers, isPreferential);
+    const supportRate = isPreferential ? 2.4 : 1.0;
+    const supportRateText = isPreferential ? '240%(우선지원대상기업)' : '100%';
 
-    const estimatedInsurance = workers * config.avgSalary * 12 * config.insuranceRate;
-    const totalLimit = estimatedInsurance * config.supportRate;
+    const estimatedInsurance = workers * AVG_SALARY_ASSUMPTION * 12 * insuranceInfo.rate;
+    let totalLimit = estimatedInsurance * supportRate;
+
+    // 연간 지원한도 최소 보장액 적용
+    totalLimit = Math.max(totalLimit, MIN_SUPPORT_LIMIT);
 
     const minRange = Math.floor((totalLimit * 0.95) / 10000) * 10000;
     const maxRange = Math.ceil((totalLimit * 1.05) / 10000) * 10000;
@@ -429,10 +452,10 @@
 
     return {
       rangeText: workers > 0 ? `약 ${minText}만 원 ~ ${maxText}만 원` : `조회불가`,
-      salaryText: config.salaryText,
-      taxRateText: config.insuranceRateText,
-      supportRateText: config.supportRateText,
-      confirmed: config.confirmed
+      salaryText: `${(AVG_SALARY_ASSUMPTION / 10000).toLocaleString()}만 원(예시 가정값)`,
+      taxRateText: insuranceInfo.rateText,
+      supportRateText: supportRateText,
+      tierText: insuranceInfo.tierText
     };
   }
 
