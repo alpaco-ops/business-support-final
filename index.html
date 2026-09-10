@@ -193,7 +193,7 @@
 
     <div class="industry-section">
       <div class="industry-select-label-row">
-        <label class="industry-select-label" for="industrySelect">업종을 선택해주세요 (한국표준산업분류 기준)</label>
+        <label class="industry-select-label" for="industrySelect">업종을 선택해주세요 (한국표준산업분류 기준, 우선지원대상기업 여부 자동 판정)</label>
         <button type="button" class="help-toggle-btn" onclick="toggleHelp()">? 판정기준</button>
       </div>
       <select id="industrySelect" onchange="selectIndustry(this.value)">
@@ -222,7 +222,7 @@
       </select>
       <p class="industry-result" id="industryResult"></p>
       <div class="help-content" id="helpContent">
-        업종별 상시근로자 수 기준(고용보험법 시행령 별표1: 제조업 500명 / 광업·건설업·운수창고업·정보통신업·사업시설관리업·전문과학기술서비스업·보건복지서비스업 300명 / 도소매업·숙박음식업·금융보험업·예술스포츠여가서비스업 200명 / 그 밖의 업종 100명 이하)과 이미 조회된 상시근로자 수를 비교해 자동으로 판정합니다.<br>
+        업종별 상시근로자 수 기준(고용보험법 시행령 별표1: 제조업 500명 / 광업·건설업·운수창고업·정보통신업·사업시설관리업·전문과학기술서비스업·보건복지서비스업 300명 / 도소매업·숙박음식업·금융보험업·예술스포츠여가서비스업 200명 / 그 밖의 업종 100명 이하)과 이미 조회된 상시근로자 수를 비교해 <strong>우선지원대상기업 여부</strong>를 자동으로 판정합니다.<br>
         업종 대분류 기준의 자동 판정이라 세부 예외(예: 제조업 중 일부 세분류)가 실제와 다를 수 있습니다. 정확한 여부는 <strong>고용24(work24.go.kr)</strong> 또는 <strong>근로복지공단(1588-0075)</strong>에서 다시 확인하실 수 있습니다.
       </div>
     </div>
@@ -418,6 +418,7 @@
     document.getElementById('tempValueNotice').style.display = 'none';
     document.getElementById('helpContent').classList.remove('open');
     document.getElementById('avgSalaryInput').value = '';
+    salaryIsPlaceholder = true;
     document.getElementById('salaryInputHint').innerText = '실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다.';
     document.getElementById('industrySelect').value = '';
     document.getElementById('industryResult').style.display = 'none';
@@ -478,32 +479,38 @@
     recalculateAmount();
   }
 
-  // 월평균급여를 직접 입력하면(사용자 타이핑), 안내 문구를 기본 문구로 되돌리고 이미 우선지원대상 여부가
-  // 선택된 상태에서만 다시 계산합니다.
+  // 지금 입력창에 들어있는 값이 "사용자가 확정한 실제 급여"인지, "예시값/미입력 상태"인지 추적합니다.
+  // (예: "모르겠어요"로 350을 채우면 입력창 값 자체는 350이지만, 실제 확정값은 아니므로 계속 예시값으로 취급합니다.)
+  let salaryIsPlaceholder = true;
+
+  // 월평균급여를 직접 입력하면(사용자 타이핑), 확정값으로 간주하고 다시 계산합니다.
   function onAvgSalaryChange() {
-    document.getElementById('salaryInputHint').innerText = '실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다.';
+    const input = document.getElementById('avgSalaryInput');
+    salaryIsPlaceholder = !input.value;
     if (!currentCompany || currentCompany.isPreferential === null) return;
     recalculateAmount();
   }
 
-  // "정확한 월평균급여를 모르시나요?" 클릭 시 참고용 예시값(350만원)을 채우고, 대체 적용됐다는 것을 명확히 안내합니다.
+  // "정확한 월평균급여를 모르시나요?" 클릭 시 참고용 예시값(350만원)을 채웁니다.
   // ⚠️ 350만원은 특정 통계 인용이 아닌 참고용 예시값입니다 (근거 확인 불가한 출처 인용은 지양).
   function useDefaultSalary() {
     document.getElementById('avgSalaryInput').value = 350;
-    document.getElementById('salaryInputHint').innerHTML = '⚠️ 정확한 월평균급여를 알 수 없어 참고용 예시값(350만 원)으로 대체 적용되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.';
+    salaryIsPlaceholder = true;
     if (!currentCompany || currentCompany.isPreferential === null) return;
     recalculateAmount();
   }
 
-  function getAvgSalaryInputValue() {
-    const input = document.getElementById('avgSalaryInput');
-    const val = parseFloat(input.value);
-    if (!val || val <= 0) return 3500000;
-    return val * 10000;
-  }
-
   function recalculateAmount() {
-    const avgSalary = getAvgSalaryInputValue();
+    const input = document.getElementById('avgSalaryInput');
+    const rawVal = parseFloat(input.value);
+    const avgSalary = (!rawVal || rawVal <= 0) ? 3500000 : rawVal * 10000;
+
+    // 급여를 입력하지 않고 업종만 선택해도 즉시 결과가 뜨는 구조이므로,
+    // 예시값(350만원)이 쓰였다는 사실을 결과가 나오는 시점에 항상 자동으로 알려줍니다.
+    document.getElementById('salaryInputHint').innerHTML = salaryIsPlaceholder
+      ? '⚠️ 정확한 월평균급여를 알 수 없어 참고용 예시값(350만 원)으로 계산되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.'
+      : '실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다.';
+
     const result = calculateSupportAmount(currentCompany.employeeCount, currentCompany.isPreferential, avgSalary);
     currentCompany.limitRangeText = result.rangeText;
 
