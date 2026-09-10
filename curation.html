@@ -397,7 +397,7 @@
             <p id="display-industry" style="font-size: 12px; color: #3b82f6; margin-top: 2px;">업종: 교육서비스업 / 인력개발</p>
         </div>
         <div class="badge-limit" id="display-limit-amount">
-            예상 지원금 한도:<br>약 1,400만 원<span style="display:block; font-size:11px; font-weight:400; margin-top:2px; color:#3b82f6;">(B 선택 지원금 환급 과정 기준)</span>
+            예상 지원금 한도:<br>약 1,400만 원<span style="display:block; font-size:11px; font-weight:400; margin-top:2px; color:#3b82f6;">(🅱️ 선택 지원금 환급 과정 기준)</span>
         </div>
     </div>
 
@@ -875,7 +875,7 @@
         document.getElementById('display-company-name').innerHTML = `${companyData.name} <span style="font-size: 12px; font-weight: normal; color: #64748b;" id="display-biz-no">(사업자번호: ${companyData.bizNo})</span>`;
         document.getElementById('display-worker-info').innerText = `상시 근로자 ${companyData.workers}명 · ${companyData.compType} 구분`;
         document.getElementById('display-industry').innerText = `업종: ${companyData.ksicIndustry}`;
-        document.getElementById('display-limit-amount').innerHTML = `예상 지원금 한도:<br>${companyData.limitAmount}<span style="display:block; font-size:11px; font-weight:400; margin-top:2px; color:#3b82f6;">(B 선택 지원금 환급 과정 기준)</span>`;
+        document.getElementById('display-limit-amount').innerHTML = `예상 지원금 한도:<br>${companyData.limitAmount}<span style="display:block; font-size:11px; font-weight:400; margin-top:2px; color:#3b82f6;">(🅱️ 선택 지원금 환급 과정 기준)</span>`;
 
         document.getElementById('result-main-title').innerText = `🎉 [${companyData.name}] 맞춤 추천 큐레이션 결과`;
 
