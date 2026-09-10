@@ -721,6 +721,40 @@
         return list.filter(c => selectedModes.includes(c.type));
     }
 
+    // 업종명(예: "제조업", "금융 및 보험업")에서 과정명 매칭용 키워드를 뽑습니다.
+    // "서비스", "관리", "지원", "사업" 등 여러 업종에 공통으로 붙는 흔한 단어는
+    // 매칭 정확도를 떨어뜨리므로 제외합니다.
+    const INDUSTRY_KEYWORD_STOPWORDS = new Set([
+        '서비스업', '서비스', '관리', '지원', '사업', '기술', '전문', '기타',
+        '개인', '행정', '처리', '재생', '공급', '시설', '임대', '과학', '단체', '수리'
+    ]);
+
+    function getIndustryKeywords(ksicIndustry) {
+        const match = (ksicIndustry || '').match(/^[A-Z]\.\s*(.+)$/);
+        if (!match) return [];
+
+        const tokens = match[1].split(/[,\s]+|및/).map(t => t.trim()).filter(Boolean);
+        const keywords = new Set();
+        tokens.forEach(t => {
+            if (t.length >= 2 && !INDUSTRY_KEYWORD_STOPWORDS.has(t)) keywords.add(t);
+            const stripped = t.replace(/업$/, '');
+            if (stripped.length >= 2 && !INDUSTRY_KEYWORD_STOPWORDS.has(stripped)) keywords.add(stripped);
+        });
+        return [...keywords];
+    }
+
+    // 회사 업종명이 과정명에 들어간 과정 중 최신순으로 하나를 찾습니다. 없으면 null.
+    // allowedL1이 주어지면 그 대분류 범위 안에서만 찾습니다(사용자가 이미 고른 카테고리 커버리지를 깨지 않기 위함).
+    function findIndustryMatchCourse(excludeCodes, allowedL1) {
+        const keywords = getIndustryKeywords(companyData.ksicIndustry);
+        if (keywords.length === 0) return null;
+
+        let pool = filterByMode(COURSE_DATA.slice());
+        if (allowedL1) pool = pool.filter(c => allowedL1.has(c.l1));
+        pool.sort((a, b) => parseMonthValue(b.month) - parseMonthValue(a.month));
+        return pool.find(c => !excludeCodes.has(c.code) && keywords.some(k => c.name.includes(k))) || null;
+    }
+
     const matchesPath = (c, p) => {
         if (c.l1 !== p.l1) return false;
         if (p.l2 && c.l2 !== p.l2) return false;
@@ -772,12 +806,15 @@
         return pool;
     }
 
-    // 우선순위 풀에서 상위 3개를 뽑되, 북러닝/이러닝을 둘 다 선택한 경우
-    // 한쪽 타입으로만 3개가 채워지지 않도록 최소 1개씩은 포함되게 보정합니다.
-    // (해당 조건에 맞는 반대 타입 과정이 아예 없으면 억지로 채우지 않습니다.)
+    // 우선순위 풀에서 상위 3개를 뽑되, 아래 두 가지를 보정합니다 (해당 조건에 맞는 후보가
+    // 아예 없으면 억지로 채우지 않습니다).
+    // 1) 북러닝/이러닝을 둘 다 선택했는데 한쪽 타입으로만 채워지면 최소 1개씩 포함되도록 교체
+    // 2) 주제를 선택 안 했거나 대분류를 2개 이상 선택해 방향이 모호할 때, 과정명에 회사 업종명이
+    //    들어간 과정이 있으면 하나 포함되도록 교체 (이미 위 1)에서 교체된 자리는 건드리지 않음)
     function recommendCourses() {
         const pool = buildRankedCoursePool();
         const result = pool.slice(0, 3);
+        let protectedIndex = -1;
 
         if (selectedModes.length === 2 && result.length === 3) {
             const typesInResult = new Set(result.map(c => c.type));
@@ -790,8 +827,26 @@
                     for (let i = result.length - 1; i >= 0; i--) {
                         if (result[i].type === overRepresentedType) {
                             result[i] = candidate;
+                            protectedIndex = i;
                             break;
                         }
+                    }
+                }
+            }
+        }
+
+        const paths = getSelectedLeafPaths();
+        const ambiguousTopic = paths.length === 0 || selectedL1.size >= 2;
+        if (ambiguousTopic && result.length === 3) {
+            const resultCodes = new Set(result.map(c => c.code));
+            // 대분류를 2개 이상 골랐다면 그 범위 안에서만 찾아 선택한 카테고리 커버리지를 지킵니다.
+            const allowedL1 = selectedL1.size >= 2 ? selectedL1 : null;
+            const industryMatch = findIndustryMatchCourse(resultCodes, allowedL1);
+            if (industryMatch) {
+                for (let i = result.length - 1; i >= 0; i--) {
+                    if (i !== protectedIndex) {
+                        result[i] = industryMatch;
+                        break;
                     }
                 }
             }
