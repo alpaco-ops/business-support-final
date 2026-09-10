@@ -490,7 +490,7 @@
   // ⚠️ 350만원은 특정 통계 인용이 아닌 참고용 예시값입니다 (근거 확인 불가한 출처 인용은 지양).
   function useDefaultSalary() {
     document.getElementById('avgSalaryInput').value = 350;
-    document.getElementById('salaryInputHint').innerHTML = '⚠️ 정확한 월평균급여를 모르셔서 참고용 예시값(350만 원)으로 대체 적용되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.';
+    document.getElementById('salaryInputHint').innerHTML = '⚠️ 정확한 월평균급여를 알 수 없어 참고용 예시값(350만 원)으로 대체 적용되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.';
     if (!currentCompany || currentCompany.isPreferential === null) return;
     recalculateAmount();
   }
