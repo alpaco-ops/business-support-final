@@ -79,8 +79,6 @@
     #avgSalaryInput { flex: 1; min-width: 0; padding: 10px 12px; font-size: 15px; font-weight: 700; color: var(--text); border: 1px solid var(--border); border-radius: 8px; outline: none; transition: border 0.2s; }
     #avgSalaryInput:focus { border-color: var(--primary); }
     .salary-input-suffix { font-size: 13px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
-    .salary-unknown-link { display: block; margin-top: 8px; background: none; border: none; padding: 0; font-size: 12px; font-weight: 600; color: var(--primary); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; text-align: left; }
-    .salary-unknown-link:hover { color: var(--primary-hover); }
     .salary-input-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.4; }
 
     /* 지원금 한도 카드 */
@@ -237,8 +235,7 @@
         <input type="number" id="avgSalaryInput" placeholder="숫자만 입력" min="1" step="1" oninput="onAvgSalaryChange()">
         <span class="salary-input-suffix">만원</span>
       </div>
-      <button type="button" class="salary-unknown-link" onclick="useDefaultSalary()">정확한 월평균급여를 모르시나요? 참고용 평균값 적용하기</button>
-      <p class="salary-input-hint" id="salaryInputHint">실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다.</p>
+      <p class="salary-input-hint" id="salaryInputHint">실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다. 모르시면 입력하지 않아도 참고용 예시값으로 자동 계산됩니다.</p>
     </div>
 
     <div class="amount-card">
@@ -422,7 +419,7 @@
     document.getElementById('helpContent').classList.remove('open');
     document.getElementById('avgSalaryInput').value = '';
     salaryIsPlaceholder = true;
-    document.getElementById('salaryInputHint').innerText = '실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다.';
+    document.getElementById('salaryInputHint').innerText = '실제 우리 회사 평균급여를 입력하면 더 정확한 예상치를 확인할 수 있습니다. 모르시면 입력하지 않아도 참고용 예시값으로 자동 계산됩니다.';
     document.getElementById('industrySelect').value = '';
     document.getElementById('industryResult').style.display = 'none';
 
@@ -494,15 +491,7 @@
     recalculateAmount();
   }
 
-  // "정확한 월평균급여를 모르시나요?" 클릭 시 참고용 예시값(350만원)을 채웁니다.
-  // ⚠️ 350만원은 특정 통계 인용이 아닌 참고용 예시값입니다 (근거 확인 불가한 출처 인용은 지양).
-  function useDefaultSalary() {
-    document.getElementById('avgSalaryInput').value = 350;
-    salaryIsPlaceholder = true;
-    if (!currentCompany || currentCompany.isPreferential === null) return;
-    recalculateAmount();
-  }
-
+  // ⚠️ 350만원(3500000)은 특정 통계 인용이 아닌 참고용 예시값입니다 (근거 확인 불가한 출처 인용은 지양).
   function recalculateAmount() {
     const input = document.getElementById('avgSalaryInput');
     const rawVal = parseFloat(input.value);
