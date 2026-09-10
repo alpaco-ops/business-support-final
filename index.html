@@ -486,10 +486,11 @@
     recalculateAmount();
   }
 
-  // "정확한 월평균급여를 모르시나요?" 클릭 시 참고용 평균값(300만원)을 채우고, 대체 적용됐다는 것을 명확히 안내합니다.
+  // "정확한 월평균급여를 모르시나요?" 클릭 시 참고용 예시값(350만원)을 채우고, 대체 적용됐다는 것을 명확히 안내합니다.
+  // ⚠️ 350만원은 특정 통계 인용이 아닌 참고용 예시값입니다 (근거 확인 불가한 출처 인용은 지양).
   function useDefaultSalary() {
-    document.getElementById('avgSalaryInput').value = 300;
-    document.getElementById('salaryInputHint').innerHTML = '⚠️ 정확한 월평균급여를 모르셔서 참고용 평균값(300만 원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균)으로 대체 적용되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.';
+    document.getElementById('avgSalaryInput').value = 350;
+    document.getElementById('salaryInputHint').innerHTML = '⚠️ 정확한 월평균급여를 모르셔서 참고용 예시값(350만 원)으로 대체 적용되었습니다. 이 경우 실제 결과와 오차가 발생할 수 있습니다.';
     if (!currentCompany || currentCompany.isPreferential === null) return;
     recalculateAmount();
   }
@@ -497,7 +498,7 @@
   function getAvgSalaryInputValue() {
     const input = document.getElementById('avgSalaryInput');
     const val = parseFloat(input.value);
-    if (!val || val <= 0) return 3000000;
+    if (!val || val <= 0) return 3500000;
     return val * 10000;
   }
 
@@ -534,7 +535,7 @@
 
   // 고용안정·직업능력개발사업 보험료율/지원배율 산출 기준.
   // 고용보험법 시행령 및 사업주 직업능력개발훈련 지원규정 기준 (150인/1,000인, 우선지원대상기업 여부).
-  // ⚠️ 월평균급여는 실제 급여 데이터가 아니라 사용자가 입력한(또는 기본 예시인 300만원, 고용노동부 사업체노동력조사 300인 미만 사업체 평균) 가정값입니다.
+  // ⚠️ 월평균급여는 실제 급여 데이터가 아니라 사용자가 입력한(또는 기본 예시인 350만원, 특정 통계 인용 아닌 참고용 예시값) 가정값입니다.
   const MIN_SUPPORT_LIMIT = 5000000; // 연간 지원한도 최소 보장액
 
   function getInsuranceRateInfo(workers, isPreferential) {
