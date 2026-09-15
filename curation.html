@@ -337,6 +337,23 @@
             background: #059669;
         }
 
+        .copy-toast {
+            display: none;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .copy-toast.show {
+            display: block;
+        }
+
         .pdf-content {
             position: absolute;
             left: -9999px;
@@ -507,9 +524,12 @@
             <div id="recommended-courses-display"></div>
         </div>
 
-        <a id="btn-alpaco-inquiry" href="#" target="_blank" class="btn-cta">
+        <a id="btn-alpaco-inquiry" href="#" target="_blank" class="btn-cta" onclick="copyInquiryAndGo()">
             선택한 맞춤 추천 조건으로 알파코 문의하기 ➔
         </a>
+        <div class="copy-toast" id="copyToast">
+            📋 문의 내용이 복사되었습니다! 알파코 문의 페이지의 <strong>"상세내용"</strong> 칸에 붙여넣기(Ctrl+V) 해주세요.
+        </div>
 
         <div class="btn-group" style="margin-top: 16px; border-top: none; padding-top: 0;">
             <button class="btn btn-secondary" onclick="resetAndGoToStart()">처음부터 다시 선택</button>
@@ -929,6 +949,7 @@
     let selectedStep1 = '';
     let selectedTargets = [];
     let selectedModes = [];
+    let currentInquiryContent = '';
 
     function goToStep(stepId) {
         document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
@@ -1197,13 +1218,28 @@
 
         const alpacoBaseUrl = "https://corp.alpaco.co.kr/bbs/write.php?bo_table=online";
         const subjectText = `[교육 지원금 맞춤 문의] ${companyData.name} (${companyData.bizNo})`;
-        
+
         const encodedSubject = encodeURIComponent(subjectText);
         const encodedContent = encodeURIComponent(inquiryContent);
 
+        // 알파코 문의 게시판이 URL 파라미터로 제목/내용을 채워주지 않아서(hidden 필드로 고정되어 있음),
+        // 클립보드에 복사해두고 사용자가 "상세내용" 칸에 직접 붙여넣도록 안내합니다.
+        currentInquiryContent = inquiryContent;
         document.getElementById('btn-alpaco-inquiry').href = `${alpacoBaseUrl}&wr_subject=${encodedSubject}&wr_content=${encodedContent}`;
 
         goToStep('step-result');
+    }
+
+    function copyInquiryAndGo() {
+        if (navigator.clipboard && currentInquiryContent) {
+            navigator.clipboard.writeText(currentInquiryContent).catch(() => {});
+        }
+        const toast = document.getElementById('copyToast');
+        if (toast) {
+            toast.classList.add('show');
+            clearTimeout(copyInquiryAndGo._hideTimer);
+            copyInquiryAndGo._hideTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+        }
     }
 
     // PDF에 담을 내용을 화면 밖 숨김 영역(#pdfContent)에 채워 넣습니다.
