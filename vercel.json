@@ -1,6 +1,7 @@
 {
   "version": 2,
   "rewrites": [
-    { "source": "/business", "destination": "/api" }
+    { "source": "/business", "destination": "/api" },
+    { "source": "/log-inquiry", "destination": "/api" }
   ]
 }

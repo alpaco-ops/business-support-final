@@ -555,18 +555,15 @@
         ksicIndustry: "P. 교육 서비스업"
     };
 
-    const SHEET_LOG_URL = 'https://script.google.com/macros/s/AKfycbwwbT9853wm7akLR_B4UXGesqXkZ-gX3WpQJR0Y2UigHkJGbKjaYi1s5WI_n2bXumYVAw/exec';
-    const SHEET_LOG_TOKEN = 'alpaco-curation-9f3a7c2e';
-
-    // 추천 결과 화면에 도달할 때마다 구글 시트로 기록을 전송합니다.
-    // 응답을 읽을 수 없는 방식(no-cors)이라 성공 여부는 확인하지 않으며, 실패해도 화면 동작에는 영향이 없습니다.
+    // 추천 결과 화면에 도달할 때마다 우리 서버(/log-inquiry)로 기록을 전송합니다.
+    // 실제 구글 시트 주소와 비밀 토큰은 서버(Vercel 환경변수)에만 있고, 브라우저 코드에는 없습니다.
+    // 실패해도 화면 동작에는 영향이 없습니다.
     function logToSheet(payload) {
         try {
-            fetch(SHEET_LOG_URL, {
+            fetch('/log-inquiry', {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ ...payload, secret: SHEET_LOG_TOKEN })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
         } catch (e) {
             console.error('시트 기록 실패:', e);

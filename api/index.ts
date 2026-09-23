@@ -3,6 +3,7 @@ const axios = require("axios");
 const { XMLParser } = require("fast-xml-parser");
 
 const app = express();
+app.use(express.json());
 
 const API_URL =
   "https://apis.data.go.kr/B490001/gySjbPstateInfoService/getGySjBoheomBsshItem";
@@ -130,6 +131,40 @@ app.get("/business", async function (req: any, res: any) {
           ? error.message
           : undefined,
     });
+  }
+});
+
+app.post("/log-inquiry", async function (req: any, res: any) {
+  try {
+    /*
+     * 구글 시트(Apps Script) 웹앱 주소와 비밀 토큰은 브라우저 코드에
+     * 절대 넣지 않고, 서버(Vercel 환경변수)에서만 사용합니다.
+     * 브라우저는 이 서버 엔드포인트만 알고, 실제 구글 시트 주소는 모릅니다.
+     */
+    const sheetLogUrl = process.env.SHEET_LOG_URL || "";
+    const sheetLogToken = process.env.SHEET_LOG_TOKEN || "";
+
+    if (!sheetLogUrl || !sheetLogToken) {
+      return res.status(500).json({
+        success: false,
+        message: "구글 시트 연동 환경변수가 설정되지 않았습니다.",
+      });
+    }
+
+    await axios.post(
+      sheetLogUrl,
+      { ...req.body, secret: sheetLogToken },
+      {
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        timeout: 10000,
+      }
+    );
+
+    return res.status(200).json({ success: true });
+  } catch (error: any) {
+    console.error("구글 시트 기록 오류:", error.message);
+    // 기록 실패는 사용자 화면 동작에 영향을 주지 않도록 항상 200으로 응답합니다.
+    return res.status(200).json({ success: false });
   }
 });
 
