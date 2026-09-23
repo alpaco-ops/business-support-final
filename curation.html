@@ -1190,7 +1190,7 @@
                 coursesEl.innerHTML = recommended.map((c, i) => `
                     <div class="course-card">
                         <h4>${i + 1}. [${c.type}] ${c.name}</h4>
-                        <p>${[c.l1, c.l2, c.l3 !== c.l2 ? c.l3 : ''].filter(Boolean).join(' > ')} · 과정코드 ${c.code}</p>
+                        <p>${[c.l1, c.l2, c.l3 !== c.l2 ? c.l3 : ''].filter(Boolean).join(' > ')}</p>
                     </div>
                 `).join('');
             }
