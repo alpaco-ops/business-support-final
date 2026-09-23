@@ -91,6 +91,20 @@
             white-space: nowrap;
         }
 
+        @media (max-width: 480px) {
+            .company-info-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .badge-limit {
+                text-align: left;
+                white-space: normal;
+                width: 100%;
+            }
+        }
+
         .step-section {
             display: none;
             animation: fadeIn 0.3s ease-in-out forwards;
