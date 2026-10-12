@@ -63,7 +63,7 @@ app.get("/business", async function (req: any, res: any) {
         opaBoheomFg: 2, // 1: 산재보험, 2: 고용보험
       },
       responseType: "text",
-      timeout: 10000,
+      timeout: 28000,
     });
 
     const parsedXml = xmlParser.parse(apiResponse.data);
