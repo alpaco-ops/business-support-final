@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "regions": ["icn1"],
   "rewrites": [
     { "source": "/business", "destination": "/api" },
     { "source": "/log-inquiry", "destination": "/api" }
