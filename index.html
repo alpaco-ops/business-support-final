@@ -152,11 +152,12 @@
       <input type="text" id="bizNo" placeholder="예: 123-45-67890" maxlength="12">
     </div>
   </div>
-  <button type="button" class="btn-submit" onclick="handleSearch()">예상 지원금 한도 조회하기</button>
+  <button type="button" class="btn-submit" id="searchBtn" onclick="handleSearch()">예상 지원금 한도 조회하기</button>
 
   <div class="loading-box" id="loadingBox">
     <div class="spinner"></div>
-    <p style="font-size: 14px; color: var(--text-muted);">근로복지공단 고용보험 데이터를 실시간 조회 중입니다...</p>
+    <p style="font-size: 14px; color: var(--text-muted);">근로복지공단 고용보험 데이터를 실시간 조회 중입니다... <span id="loadingElapsed"></span></p>
+    <p id="loadingSlowNotice" style="display: none; margin-top: 10px; font-size: 13px; line-height: 1.5; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 12px;">공공기관(근로복지공단) 응답이 평소보다 느립니다.<br>최대 30초 정도 걸릴 수 있으니 창을 닫지 말고 잠시만 기다려 주세요.</p>
   </div>
 
   <div class="error-box" id="errorBox"></div>
@@ -297,8 +298,36 @@
     }
 
     document.getElementById('loadingBox').style.display = 'block';
+    document.getElementById('searchBtn').disabled = true;
+    startLoadingTimer();
 
-    fetchCompanyData(bizNoInput);
+    fetchCompanyData(bizNoInput).finally(function () {
+      stopLoadingTimer();
+      document.getElementById('searchBtn').disabled = false;
+    });
+  }
+
+  let loadingTimerId = null;
+
+  function startLoadingTimer() {
+    stopLoadingTimer();
+    const startedAt = Date.now();
+    const elapsedEl = document.getElementById('loadingElapsed');
+    const noticeEl = document.getElementById('loadingSlowNotice');
+    elapsedEl.textContent = '';
+    noticeEl.style.display = 'none';
+    loadingTimerId = setInterval(function () {
+      const seconds = Math.floor((Date.now() - startedAt) / 1000);
+      elapsedEl.textContent = '(' + seconds + '초 경과)';
+      if (seconds >= 4) noticeEl.style.display = 'block';
+    }, 1000);
+  }
+
+  function stopLoadingTimer() {
+    if (loadingTimerId) {
+      clearInterval(loadingTimerId);
+      loadingTimerId = null;
+    }
   }
 
   function hideAllStates() {
@@ -346,6 +375,11 @@
 
     if (response.status === 502) {
       showError('공공데이터(근로복지공단) API 조회 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      return;
+    }
+
+    if (response.status === 500) {
+      showError('공공기관(근로복지공단) 응답이 지연되고 있어 조회하지 못했습니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
