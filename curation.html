@@ -1194,7 +1194,8 @@
                 ksicIndustry: companyData.ksicIndustry,
                 limitAmount: companyData.limitAmount,
                 purpose: '필수 법정의무교육',
-                detail: `퇴직연금: ${hasPension ? '운영 중' : '미운영/모름'} / 추천패키지: ${packageType}`
+                detail: `퇴직연금: ${hasPension ? '운영 중' : '미운영/모름'} / 추천패키지: ${packageType}`,
+                courses: `${packageType} (퇴직연금 ${hasPension ? '운영' : '미운영/모름'})`
             });
 
         } else {
@@ -1246,7 +1247,11 @@
                 ksicIndustry: companyData.ksicIndustry,
                 limitAmount: companyData.limitAmount,
                 purpose: '선택 지원금 환급 과정',
-                detail: `선택대상: ${targetsStr} / 핵심주제: ${topicsStr} / 진행방식: ${modesStr} / 추천과정: ${recommendedStr}`
+                detail: `선택대상: ${targetsStr} / 핵심주제: ${topicsStr} / 진행방식: ${modesStr} / 추천과정: ${recommendedStr}`,
+                targets: selectedTargets.length > 0 ? selectedTargets.join(', ') : '미선택',
+                topics: topicPaths.length > 0 ? topicPaths.map(leafPathLabel).join(', ') : '미선택',
+                modes: selectedModes.length > 0 ? selectedModes.join(', ') : '미선택',
+                courses: recommendedStr
             });
         }
 

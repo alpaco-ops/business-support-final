@@ -322,7 +322,7 @@
 
     const isValidBizNo = /^\d{10}$/.test(bizNoInput);
     logEvent('1. 예상 지원금 한도 조회하기', {
-      bizNo: isValidBizNo ? bizNoInput : '',
+      bizNo: isValidBizNo ? formatBizNo(bizNoInput) : '',
       detail: isValidBizNo ? '' : '입력 형식 오류'
     });
 
